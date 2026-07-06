@@ -15,6 +15,25 @@ requiredEnvVariables.forEach((variable) => {
     }
 });
 
+const normalizeDatabaseUrl = (databaseUrl: string) => {
+  let normalizedUrl = databaseUrl.trim();
+
+  if (normalizedUrl.startsWith("DATABASE_URL=")) {
+    normalizedUrl = normalizedUrl.slice("DATABASE_URL=".length).trim();
+  }
+
+  if (
+    (normalizedUrl.startsWith("\"") && normalizedUrl.endsWith("\"")) ||
+    (normalizedUrl.startsWith("'") && normalizedUrl.endsWith("'"))
+  ) {
+    normalizedUrl = normalizedUrl.slice(1, -1).trim();
+  }
+
+  return normalizedUrl;
+};
+
+const databaseUrl = normalizeDatabaseUrl(process.env.DATABASE_URL!);
+
 const validateDatabaseUrl = (databaseUrl: string) => {
   let parsedUrl: URL;
 
@@ -33,11 +52,11 @@ const validateDatabaseUrl = (databaseUrl: string) => {
   }
 };
 
-validateDatabaseUrl(process.env.DATABASE_URL!);
+validateDatabaseUrl(databaseUrl);
 
 export const env = {
   PORT: Number(process.env.PORT),
-  DATABASE_URL: process.env.DATABASE_URL!,
+  DATABASE_URL: databaseUrl,
   JWT_SECRET: process.env.JWT_SECRET!,
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN ?? "7d",
   CLIENT_URL: process.env.CLIENT_URL!,
