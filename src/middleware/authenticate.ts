@@ -14,11 +14,9 @@ export const authenticate = async (
   next: NextFunction
 ) => {
   try {
-    console.log("Cookies:", req.cookies);
 
     const token = req.cookies?.accessToken;
 
-    console.log("Token:", token);
 
     if (!token) {
       return next(new ApiError(401, "Token not found"));
@@ -29,7 +27,6 @@ export const authenticate = async (
       process.env.JWT_SECRET!
     ) as JwtPayload;
 
-    console.log("Decoded:", decoded);
 
     const user = await prisma.user.findUnique({
       where: {
@@ -37,7 +34,6 @@ export const authenticate = async (
       },
     });
 
-    console.log("User:", user);
 
     if (!user) {
       return next(new ApiError(401, "User not found"));
@@ -47,7 +43,6 @@ export const authenticate = async (
 
     return next();
   } catch (error) {
-    console.log("AUTH ERROR:", error);
 
     return next(new ApiError(401, "Invalid or expired token"));
   }
