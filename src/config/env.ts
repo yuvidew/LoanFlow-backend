@@ -15,6 +15,26 @@ requiredEnvVariables.forEach((variable) => {
     }
 });
 
+const validateDatabaseUrl = (databaseUrl: string) => {
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(databaseUrl);
+  } catch {
+    throw new Error("DATABASE_URL must be a valid MySQL connection URL.");
+  }
+
+  if (parsedUrl.protocol !== "mysql:") {
+    throw new Error("DATABASE_URL must start with mysql:// because Prisma is configured with provider = \"mysql\".");
+  }
+
+  if (process.env.NODE_ENV === "production" && parsedUrl.hostname === "localhost") {
+    throw new Error("DATABASE_URL cannot use localhost in production. Use the public host from your hosted MySQL provider.");
+  }
+};
+
+validateDatabaseUrl(process.env.DATABASE_URL!);
+
 export const env = {
   PORT: Number(process.env.PORT),
   DATABASE_URL: process.env.DATABASE_URL!,
