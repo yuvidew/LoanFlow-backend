@@ -7,26 +7,24 @@ interface JwtPayload {
   id: string;
 }
 
-// Verifies the auth cookie token and attaches the user to the request.
 export const authenticate = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
+    const authHeader = req.headers.authorization;
 
-    const token = req.cookies?.accessToken;
-
-
-    if (!token) {
-      return next(new ApiError(401, "Token not found"));
+    if (!authHeader) {
+      return next(new ApiError(401, "Authorization header missing"));
     }
+
+    const token = authHeader.replace("Bearer ", "");
 
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET!
     ) as JwtPayload;
-
 
     const user = await prisma.user.findUnique({
       where: {
@@ -34,16 +32,14 @@ export const authenticate = async (
       },
     });
 
-
     if (!user) {
       return next(new ApiError(401, "User not found"));
     }
 
     req.user = user;
 
-    return next();
-  } catch (error) {
-
-    return next(new ApiError(401, "Invalid or expired token"));
+    next();
+  } catch {
+    next(new ApiError(401, "Invalid or expired token"));
   }
 };

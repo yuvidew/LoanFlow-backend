@@ -50,6 +50,10 @@ const validateDatabaseUrl = (databaseUrl: string) => {
   if (process.env.NODE_ENV === "production" && parsedUrl.hostname === "localhost") {
     throw new Error("DATABASE_URL cannot use localhost in production. Use the public host from your hosted MySQL provider.");
   }
+
+  if (process.env.NODE_ENV === "production" && parsedUrl.hostname.endsWith(".internal")) {
+    throw new Error("DATABASE_URL cannot use a private .internal hostname on Render. Use the public database host from your MySQL provider.");
+  }
 };
 
 validateDatabaseUrl(databaseUrl);

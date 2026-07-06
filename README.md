@@ -159,8 +159,6 @@ Backend will start at:
 http://localhost:5000
 ```
 
----
-
 ## Backend Environment Variables
 
 ```env
@@ -173,6 +171,22 @@ JWT_SECRET="change-this-secret"
 JWT_EXPIRES_IN="7d"
 
 CLIENT_URL="http://localhost:3000"
+```
+
+## Render Deployment
+
+Use a hosted MySQL database and set `DATABASE_URL` to its public connection string.
+
+Build command:
+
+```bash
+npm install && npm run render:build
+```
+
+Start command:
+
+```bash
+npm start
 ```
 
 ---
@@ -327,4 +341,3 @@ GET    /api/v1/users/:id/eligible-products
 - ✅ Prisma ORM
 - ✅ TypeScript
 - ✅ Modern UI with Next.js & shadcn/ui
-
