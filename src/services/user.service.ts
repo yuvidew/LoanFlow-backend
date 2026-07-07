@@ -53,6 +53,8 @@ export const getEligibleProductsService = async (applicantId : string) => {
         throw new ApiError(404 , "Applicant not found");
     };
 
+    await reevaluateApplicantById(applicantId);
+
     const eligibleProducts = await findEligibleProducts(applicantId);
 
     return eligibleProducts.map((item) => item.product);
