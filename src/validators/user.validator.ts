@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const MAX_DECIMAL_10_2 = 99999999.99;
+
 // Validates applicant details before eligibility evaluation.
 export const createUserSchema = z.object({
     body: z.object({
@@ -19,7 +21,11 @@ export const createUserSchema = z.object({
 
         monthlySalary: z
             .number()
-            .positive(),
+            .positive()
+            .max(
+                MAX_DECIMAL_10_2,
+                "Monthly salary cannot exceed 99,999,999.99"
+            ),
     })
 });
 

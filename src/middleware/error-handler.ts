@@ -42,6 +42,13 @@ export const errorHandler: ErrorRequestHandler = (
         message: "Record not found.",
       });
     }
+
+    if (err.code === "P2020") {
+      return res.status(400).json({
+        status: "error",
+        message: "One of the submitted numeric values is outside the allowed range.",
+      });
+    }
   }
 
   console.error("Unexpected error:", err);
