@@ -1,4 +1,4 @@
-import { ApplicantStatus, LoanApplicant, Product } from "@prisma/client";
+import { ApplicantStatus, LoanApplicant, Prisma, Product } from "@prisma/client";
 import prisma from "../config/prisma";
 
 type ApplicantForEligibility = Pick<
@@ -124,33 +124,57 @@ export const reevaluateAllApplicants = async () => {
     prisma.product.findMany(),
   ]);
 
-  await prisma.$transaction(async (tx) => {
-    for (const applicant of applicants) {
-      const eligibleProducts = evaluateApplicantProducts(applicant, products);
-      const status =
-        eligibleProducts.length > 0
-          ? ApplicantStatus.ACTIVE
-          : ApplicantStatus.REJECTED;
+  const activeApplicantIds: string[] = [];
+  const rejectedApplicantIds: string[] = [];
+  const eligibleProductRows: Prisma.EligibleProductCreateManyInput[] = [];
 
-      await tx.eligibleProduct.deleteMany({
-        where: { applicantId: applicant.id },
-      });
+  for (const applicant of applicants) {
+    const eligibleProducts = evaluateApplicantProducts(applicant, products);
 
-      await tx.loanApplicant.update({
-        where: { id: applicant.id },
-        data: { status },
-      });
-
-      if (eligibleProducts.length > 0) {
-        await tx.eligibleProduct.createMany({
-          data: eligibleProducts.map((product) => ({
-            applicantId: applicant.id,
-            productId: product.id,
-          })),
-        });
-      }
+    if (eligibleProducts.length > 0) {
+      activeApplicantIds.push(applicant.id);
+      eligibleProductRows.push(
+        ...eligibleProducts.map((product) => ({
+          applicantId: applicant.id,
+          productId: product.id,
+        }))
+      );
+    } else {
+      rejectedApplicantIds.push(applicant.id);
     }
-  });
+  }
+
+  const operations: Prisma.PrismaPromise<unknown>[] = [
+    prisma.eligibleProduct.deleteMany(),
+  ];
+
+  if (activeApplicantIds.length > 0) {
+    operations.push(
+      prisma.loanApplicant.updateMany({
+        where: { id: { in: activeApplicantIds } },
+        data: { status: ApplicantStatus.ACTIVE },
+      })
+    );
+  }
+
+  if (rejectedApplicantIds.length > 0) {
+    operations.push(
+      prisma.loanApplicant.updateMany({
+        where: { id: { in: rejectedApplicantIds } },
+        data: { status: ApplicantStatus.REJECTED },
+      })
+    );
+  }
+
+  if (eligibleProductRows.length > 0) {
+    operations.push(
+      prisma.eligibleProduct.createMany({
+        data: eligibleProductRows,
+      })
+    );
+  }
+
+  await prisma.$transaction(operations);
 
   return applicants.length;
 };
